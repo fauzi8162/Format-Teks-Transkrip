@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Format Teks Transkrip</title>
+    <!-- Memuat Tailwind CSS untuk styling modern dan responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memuat Google Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        // Terapkan tema gelap lebih awal sebelum render untuk mencegah flash layar putih
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans min-h-screen flex flex-col transition-colors duration-200 selection:bg-indigo-100 selection:text-indigo-800 dark:selection:bg-indigo-500/30 dark:selection:text-indigo-200">
+
+    <!-- Header Utama -->
+    <header class="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div class="bg-indigo-600 text-white p-2 sm:p-2.5 rounded-xl shadow-sm shrink-0">
+                    <!-- Ikon Teks / Timestamp SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-base sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight truncate">Format Teks Transkrip</h1>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-1 sm:line-clamp-none">Ubah format timestamp <code class="bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded font-mono">(0:00)</code> menjadi <code class="bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded font-mono">[0:00]</code> secara otomatis.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/70">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Otomatis & Real-time
+                </span>
+                <!-- Tombol Toggle Dark Mode -->
+                <button id="btn-theme-toggle" type="button" aria-label="Ganti Tema Terang atau Gelap" title="Ganti Tema (Terang / Gelap)" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 transition-all cursor-pointer active:scale-95">
+                    <!-- Ikon Matahari (Muncul saat Dark Mode aktif) -->
+                    <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden dark:block text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <!-- Ikon Bulan (Muncul saat Light Mode aktif) -->
+                    <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 block dark:hidden text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Area Notifikasi Toast (Pengganti alert()) -->
+    <div id="toast" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-5 sm:bottom-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex justify-center sm:justify-end">
+        <div class="bg-slate-900 dark:bg-slate-800 text-white px-4 py-3 rounded-xl shadow-lg border border-slate-700/80 flex items-center gap-2.5 text-sm font-medium max-w-full">
+            <svg id="toast-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            <span id="toast-message" class="truncate">Berhasil disalin ke clipboard!</span>
+        </div>
+    </div>
+
+    <!-- Konten Utama -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5">
+        
+        <!-- Panel Pengaturan / Opsi Formatting -->
+        <section class="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 sm:gap-4 transition-colors">
+            <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-5">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Opsi Format:</span>
+                
+                <div class="grid grid-cols-1 sm:flex sm:flex-wrap gap-2.5 sm:gap-5">
+                    <!-- Opsi 1: Ubah (0:00) menjadi [0:00] -->
+                    <label class="inline-flex items-center gap-2.5 py-0.5 cursor-pointer select-none group">
+                        <input type="checkbox" id="opt-bracket" checked class="w-4 h-4 text-indigo-600 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer">
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">Ubah (0:00) menjadi [0:00]</span>
+                    </label>
+
+                    <!-- Opsi 2: Gabungkan kalimat yang terpotong baris -->
+                    <label class="inline-flex items-center gap-2.5 py-0.5 cursor-pointer select-none group">
+                        <input type="checkbox" id="opt-merge-lines" checked class="w-4 h-4 text-indigo-600 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer">
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">Gabungkan kalimat terpotong</span>
+                    </label>
+
+                    <!-- Opsi 3: Beri penomoran per baris -->
+                    <label class="inline-flex items-center gap-2.5 py-0.5 cursor-pointer select-none group">
+                        <input type="checkbox" id="opt-line-numbers" class="w-4 h-4 text-indigo-600 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer">
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">Beri penomoran per baris</span>
+                    </label>
+
+                    <!-- Opsi 4: Tambahkan baris kosong antar segmen -->
+                    <label class="inline-flex items-center gap-2.5 py-0.5 cursor-pointer select-none group">
+                        <input type="checkbox" id="opt-blank-line" class="w-4 h-4 text-indigo-600 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded focus:ring-indigo-500 focus:ring-2 cursor-pointer">
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white">Tambah baris kosong antar segmen</span>
+                    </label>
+                </div>
+            </div>
+
+            <button id="btn-format" type="button" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/15 dark:hover:bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-500/30 font-medium text-sm rounded-xl transition-colors cursor-pointer shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Format Sekarang
+            </button>
+        </section>
+
+        <!-- Grid 2 Kolom (Input & Output) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 flex-1">
+            
+            <!-- Kolom Kiri: Teks Input -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden transition-colors">
+                <!-- Toolbar Input -->
+                <div class="px-3.5 sm:px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                        <h2 class="font-semibold text-slate-800 dark:text-slate-100 text-sm">Teks Input</h2>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button id="btn-sample" type="button" class="px-2.5 py-2 sm:py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-300 bg-indigo-50/80 hover:bg-indigo-100 dark:bg-indigo-500/15 dark:hover:bg-indigo-500/25 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1" title="Muat contoh teks bahasa Indonesia">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Contoh Teks
+                        </button>
+                        <button id="btn-paste" type="button" class="px-2.5 py-2 sm:py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-slate-700/70 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer" title="Tempel dari clipboard">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Tempel
+                        </button>
+                        <button id="btn-clear" type="button" class="px-2.5 py-2 sm:py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/15 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer" title="Bersihkan teks">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Hapus
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Textarea Input -->
+                <div class="relative flex-1 flex flex-col min-h-[250px] sm:min-h-[340px] lg:min-h-[440px]">
+                    <textarea 
+                        id="input-text" 
+                        class="w-full h-full flex-1 p-3.5 sm:p-4 text-sm font-mono text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 placeholder:text-slate-400 dark:placeholder:text-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500/40 leading-relaxed transition-colors"
+                        placeholder="Tempel teks transkrip mentah Anda di sini... Contoh: (0:00) Halo teman-teman selamat datang. (0:05) Mari kita bahas topik menarik hari ini."
+                        spellcheck="false"
+                    ></textarea>
+                </div>
+
+                <!-- Footer Statistik Input -->
+                <div class="px-3.5 sm:px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <span id="input-word-count" class="font-medium text-slate-700 dark:text-slate-200">0 kata</span>
+                        <span>•</span>
+                        <span id="input-char-count">0 karakter</span>
+                        <span>•</span>
+                        <span id="input-line-count">0 baris</span>
+                    </div>
+                    <span id="input-ts-count" class="font-medium text-slate-600 dark:text-slate-300">0 timestamp terdeteksi</span>
+                </div>
+            </div>
+
+            <!-- Kolom Kanan: Hasil Format -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden transition-colors">
+                <!-- Toolbar Output -->
+                <div class="px-3.5 sm:px-4 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                        <h2 class="font-semibold text-slate-800 dark:text-slate-100 text-sm">Hasil Format</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btn-download" type="button" class="px-3 py-2 sm:py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Unduh hasil sebagai file .txt">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Unduh .txt
+                        </button>
+                        <button id="btn-copy" type="button" class="px-3.5 py-2 sm:py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs">
+                            <svg id="copy-icon" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span id="copy-text">Salin Hasil</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Textarea Output (Read-only) -->
+                <div class="relative flex-1 flex flex-col min-h-[250px] sm:min-h-[340px] lg:min-h-[440px]">
+                    <textarea 
+                        id="output-text" 
+                        readonly
+                        class="w-full h-full flex-1 p-3.5 sm:p-4 text-sm font-mono text-slate-900 dark:text-slate-100 bg-slate-50/40 dark:bg-slate-950/40 placeholder:text-slate-400 dark:placeholder:text-slate-500 resize-none focus:outline-none leading-relaxed transition-colors"
+                        placeholder="Hasil teks yang sudah diformat akan muncul di sini..."
+                        spellcheck="false"
+                    ></textarea>
+                </div>
+
+                <!-- Footer Statistik Output -->
+                <div class="px-3.5 sm:px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <span id="output-word-count" class="font-medium text-slate-700 dark:text-slate-200">0 kata</span>
+                        <span>•</span>
+                        <span id="output-char-count">0 karakter</span>
+                        <span>•</span>
+                        <span id="output-line-count">0 baris</span>
+                    </div>
+                    <span id="output-ts-count" class="font-medium text-indigo-600 dark:text-indigo-400">0 timestamp diformat</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer Sederhana -->
+    <footer class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1.5">
+        <p class="text-slate-400 dark:text-slate-500">Pemrosesan dilakukan sepenuhnya di browser Anda. Cepat, aman, dan tanpa menyimpan data ke server.</p>
+        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">
+            by <a href="https://instagram.com/riozi_25" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold hover:underline transition-colors">@riozi_25</a>
+        </p>
+    </footer>
+
+    <script>
+        // Kumpulan Contoh Teks Dummy Bahasa Indonesia
+        const SAMPLE_TEXTS = [
+            `(0:00) Halo teman-teman, selamat datang kembali di podcast Teknologi Santai. (0:06) Hari ini kita akan membahas bagaimana kecerdasan buatan membantu pekerjaan sehari-hari. (0:14) Banyak orang mengira teknologi ini rumit,
+padahal penggunaannya sangat sederhana. (0:21) Mulai dari merangkum catatan rapat hingga merapikan transkrip video panjang.
+(0:28) Mari kita simak tips praktis yang bisa langsung Anda terapkan hari ini. (0:35) Jangan lupa siapkan catatan dan kopi hangat sebelum kita mulai!`,
+            `(0:00) Selamat pagi semuanya, terima kasih sudah bergabung di sesi webinar kali ini. (0:07) Pada modul pertama, kita akan mempelajari dasar-dasar manajemen waktu yang efektif.
+(0:15) Sering kali kita merasa sibuk seharian,
+namun pekerjaan utama justru belum selesai. (0:23) Teknik Pomodoro bisa menjadi solusi tepat untuk menjaga fokus kerja. (0:31) Cukup bekerja selama 25 menit penuh, lalu istirahat singkat selama 5 menit.`
+        ];
+
+        let currentSampleIndex = 0;
+
+        // Referensi Elemen DOM
+        const inputTextEl = document.getElementById('input-text');
+        const outputTextEl = document.getElementById('output-text');
+
+        // Opsi Checkbox
+        const optBracketEl = document.getElementById('opt-bracket');
+        const optMergeLinesEl = document.getElementById('opt-merge-lines');
+        const optLineNumbersEl = document.getElementById('opt-line-numbers');
+        const optBlankLineEl = document.getElementById('opt-blank-line');
+
+        // Tombol Aksi
+        const btnFormat = document.getElementById('btn-format');
+        const btnSample = document.getElementById('btn-sample');
+        const btnPaste = document.getElementById('btn-paste');
+        const btnClear = document.getElementById('btn-clear');
+        const btnCopy = document.getElementById('btn-copy');
+        const btnDownload = document.getElementById('btn-download');
+        const btnThemeToggle = document.getElementById('btn-theme-toggle');
+
+        // Statistik Elemen
+        const inputWordCountEl = document.getElementById('input-word-count');
+        const inputCharCountEl = document.getElementById('input-char-count');
+        const inputLineCountEl = document.getElementById('input-line-count');
+        const inputTsCountEl = document.getElementById('input-ts-count');
+
+        const outputWordCountEl = document.getElementById('output-word-count');
+        const outputCharCountEl = document.getElementById('output-char-count');
+        const outputLineCountEl = document.getElementById('output-line-count');
+        const outputTsCountEl = document.getElementById('output-ts-count');
+
+        // Toast Notification
+        const toastEl = document.getElementById('toast');
+        const toastMessageEl = document.getElementById('toast-message');
+        const toastIconEl = document.getElementById('toast-icon');
+        let toastTimeout = null;
+
+        // Toggle Dark Mode
+        btnThemeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            showToast(isDark ? 'Mode Gelap diaktifkan' : 'Mode Terang diaktifkan');
+        });
+
+        // Dengarkan perubahan tema sistem jika pengguna belum menentukan preferensi manual
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!localStorage.getItem('theme')) {
+                    if (e.matches) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                }
+            });
+        }
+
+        /**
+         * Menampilkan notifikasi melayang (toast) secara halus
+         */
+        function showToast(message, isError = false) {
+            if (toastTimeout) clearTimeout(toastTimeout);
+
+            toastMessageEl.textContent = message;
+            if (isError) {
+                toastIconEl.classList.remove('text-emerald-400');
+                toastIconEl.classList.add('text-rose-400');
+            } else {
+                toastIconEl.classList.remove('text-rose-400');
+                toastIconEl.classList.add('text-emerald-400');
+            }
+
+            toastEl.classList.remove('translate-y-24', 'opacity-0');
+            toastEl.classList.add('translate-y-0', 'opacity-100');
+
+            toastTimeout = setTimeout(() => {
+                toastEl.classList.remove('translate-y-0', 'opacity-100');
+                toastEl.classList.add('translate-y-24', 'opacity-0');
+            }, 2600);
+        }
+
+        /**
+         * Menghitung statistik teks (kata, karakter, baris, jumlah timestamp)
+         */
+        function getTextStats(text, tsRegex) {
+            const trimmed = text.trim();
+            const words = trimmed ? trimmed.split(/\s+/).length : 0;
+            const chars = text.length;
+            const lines = text ? text.split(/\r?\n/).filter(line => line.trim() !== '').length : 0;
+            const tsMatches = text.match(tsRegex);
+            const tsCount = tsMatches ? tsMatches.length : 0;
+
+            return { words, chars, lines, tsCount };
+        }
+
+        /**
+         * Memproses dan memformat teks transkrip berdasarkan opsi yang dipilih
+         */
+        function processTranscript() {
+            try {
+                const rawText = inputTextEl.value;
+
+                // Update statistik input
+                const inputStats = getTextStats(rawText, /\(\d{1,2}:\d{2}(?::\d{2})?\)|\[\d{1,2}:\d{2}(?::\d{2})?\]/g);
+                inputWordCountEl.textContent = `${inputStats.words} kata`;
+                inputCharCountEl.textContent = `${inputStats.chars} karakter`;
+                inputLineCountEl.textContent = `${inputStats.lines} baris`;
+                inputTsCountEl.textContent = `${inputStats.tsCount} timestamp terdeteksi`;
+
+                if (!rawText.trim()) {
+                    outputTextEl.value = '';
+                    outputWordCountEl.textContent = '0 kata';
+                    outputCharCountEl.textContent = '0 karakter';
+                    outputLineCountEl.textContent = '0 baris';
+                    outputTsCountEl.textContent = '0 timestamp diformat';
+                    return;
+                }
+
+                const useBracket = optBracketEl.checked;
+                const mergeLines = optMergeLinesEl.checked;
+                const useLineNumbers = optLineNumbersEl.checked;
+                const useBlankLine = optBlankLineEl.checked;
+
+                let workingText = rawText.replace(/\r\n/g, '\n');
+
+                // Gabungkan baris yang terpotong menjadi satu spasi jika opsi aktif
+                if (mergeLines) {
+                    workingText = workingText.replace(/\n+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+                }
+
+                // Pola regex mendeteksi timestamp format (0:00), (00:00), (1:02:03), [0:00], dll.
+                const timestampPattern = /(\(\s*\d{1,2}:\d{2}(?::\d{2})?\s*\)|\[\s*\d{1,2}:\d{2}(?::\d{2})?\s*\])/g;
+
+                let segments = [];
+
+                if (timestampPattern.test(workingText)) {
+                    // Pisahkan teks setiap kali bertemu timestamp baru
+                    const parts = workingText.split(timestampPattern);
+                    let currentPrefix = '';
+
+                    for (let i = 0; i < parts.length; i++) {
+                        const part = parts[i];
+                        if (!part || !part.trim()) continue;
+
+                        if (/^(\(\s*\d{1,2}:\d{2}(?::\d{2})?\s*\)|\[\s*\d{1,2}:\d{2}(?::\d{2})?\s*\])$/.test(part.trim())) {
+                            // Jika ada timestamp berturut-turut tanpa isi teks di antaranya
+                            if (currentPrefix) {
+                                segments.push(currentPrefix);
+                            }
+                            const cleanTime = part.trim().replace(/^[\(\[]\s*|\s*[\)\]]$/g, '');
+                            currentPrefix = useBracket ? `[${cleanTime}]` : `(${cleanTime})`;
+                        } else {
+                            const cleanContent = mergeLines
+                                ? part.trim().replace(/\s{2,}/g, ' ')
+                                : part.trim();
+
+                            if (currentPrefix) {
+                                segments.push(`${currentPrefix} ${cleanContent}`);
+                                currentPrefix = '';
+                            } else {
+                                // Teks pembuka sebelum timestamp pertama muncul
+                                segments.push(cleanContent);
+                            }
+                        }
+                    }
+
+                    if (currentPrefix) {
+                        segments.push(currentPrefix);
+                    }
+                } else {
+                    // Jika tidak ada timestamp sama sekali, rapikan per baris
+                    segments = workingText
+                        .split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line.length > 0);
+                }
+
+                // Tambahkan nomor urut per baris/segmen jika dicentang
+                if (useLineNumbers) {
+                    segments = segments.map((seg, idx) => `${idx + 1}. ${seg}`);
+                }
+
+                const separator = useBlankLine ? '\n\n' : '\n';
+                const formattedResult = segments.join(separator);
+                outputTextEl.value = formattedResult;
+
+                // Update statistik output
+                const outputStats = getTextStats(formattedResult, /\[\d{1,2}:\d{2}(?::\d{2})?\]|\(\d{1,2}:\d{2}(?::\d{2})?\)/g);
+                outputWordCountEl.textContent = `${outputStats.words} kata`;
+                outputCharCountEl.textContent = `${outputStats.chars} karakter`;
+                outputLineCountEl.textContent = `${segments.length} baris`;
+                outputTsCountEl.textContent = `${outputStats.tsCount} timestamp diformat`;
+            } catch (error) {
+                console.error('Terjadi kesalahan saat memformat teks:', error);
+                showToast('Gagal memformat teks', true);
+            }
+        }
+
+        // Event Listeners Real-time
+        inputTextEl.addEventListener('input', processTranscript);
+        optBracketEl.addEventListener('change', processTranscript);
+        optMergeLinesEl.addEventListener('change', processTranscript);
+        optLineNumbersEl.addEventListener('change', processTranscript);
+        optBlankLineEl.addEventListener('change', processTranscript);
+
+        btnFormat.addEventListener('click', () => {
+            processTranscript();
+            showToast('Teks berhasil diformat ulang!');
+        });
+
+        // Tombol Muat Contoh Teks
+        btnSample.addEventListener('click', () => {
+            inputTextEl.value = SAMPLE_TEXTS[currentSampleIndex];
+            currentSampleIndex = (currentSampleIndex + 1) % SAMPLE_TEXTS.length;
+            processTranscript();
+            showToast('Contoh teks bahasa Indonesia dimuat');
+        });
+
+        // Tombol Tempel dari Clipboard
+        btnPaste.addEventListener('click', async () => {
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const clipText = await navigator.clipboard.readText();
+                    if (clipText) {
+                        inputTextEl.value = clipText;
+                        processTranscript();
+                        showToast('Teks berhasil ditempel');
+                    } else {
+                        showToast('Clipboard kosong', true);
+                    }
+                } else {
+                    inputTextEl.focus();
+                    showToast('Gunakan Ctrl+V / Cmd+V untuk menempel teks');
+                }
+            } catch (err) {
+                inputTextEl.focus();
+                showToast('Izin clipboard dibatasi, silakan tekan Ctrl+V / Cmd+V');
+            }
+        });
+
+        // Tombol Hapus Teks
+        btnClear.addEventListener('click', () => {
+            inputTextEl.value = '';
+            processTranscript();
+            inputTextEl.focus();
+            showToast('Teks telah dibersihkan');
+        });
+
+        // Tombol Salin Hasil (menggunakan execCommand untuk kompatibilitas iframe)
+        btnCopy.addEventListener('click', () => {
+            const textToCopy = outputTextEl.value;
+            if (!textToCopy.trim()) {
+                showToast('Tidak ada hasil untuk disalin', true);
+                return;
+            }
+
+            outputTextEl.select();
+            outputTextEl.setSelectionRange(0, 99999);
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    const copyTextEl = document.getElementById('copy-text');
+                    const originalLabel = copyTextEl.textContent;
+                    copyTextEl.textContent = 'Tersalin!';
+                    showToast('Hasil format berhasil disalin!');
+
+                    setTimeout(() => {
+                        copyTextEl.textContent = originalLabel;
+                    }, 1800);
+                } else {
+                    showToast('Gagal menyalin teks', true);
+                }
+            } catch (err) {
+                showToast('Gagal menyalin teks', true);
+            }
+
+            window.getSelection().removeAllRanges();
+        });
+
+        // Tombol Unduh sebagai file .txt
+        btnDownload.addEventListener('click', () => {
+            const content = outputTextEl.value;
+            if (!content.trim()) {
+                showToast('Tidak ada hasil untuk diunduh', true);
+                return;
+            }
+
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().slice(0, 10);
+
+            link.href = url;
+            link.download = `transkrip-terformat-${timestamp}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('File .txt berhasil diunduh');
+        });
+
+        // Muat contoh teks bawaan saat halaman pertama kali dibuka
+        window.addEventListener('DOMContentLoaded', () => {
+            inputTextEl.value = SAMPLE_TEXTS[0];
+            currentSampleIndex = 1;
+            processTranscript();
+        });
+    </script>
+</body>
+</html>
