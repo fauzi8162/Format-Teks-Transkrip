@@ -1,4 +1,5 @@
 # Format Teks Transkrip
+Demo : https://fauzi8162.github.io/Format-Teks-Transkrip/
 
 Aplikasi web sederhana, cepat, dan responsif untuk merapikan teks transkrip yang memiliki penanda waktu (*timestamp*) secara otomatis dan *real-time*.
 
